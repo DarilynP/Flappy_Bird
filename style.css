@@ -1,0 +1,94 @@
+#header {
+  margin: 5px;
+  font-size: 20px;
+  text-align: center;
+}
+
+body {
+  background: rgb(0, 0, 0);
+  background: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.028) 0%,
+    rgba(253, 187, 45, 1) 100%
+  );
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin-top: 50px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+#input-box {
+  width: 200px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-right: 5px;
+  font-size: 20px;
+}
+
+#input-button {
+  font-size: 20px;
+  cursor: pointer;
+  transition: background-color 0.4s;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #2e60ea;
+}
+
+#input-button:hover {
+  background-color: #9eb7fd;
+}
+
+#todo-container {
+  background: rgb(41, 33, 33);
+  width: 400px;
+  margin: 0 auto;
+  border: 2px solid #0033ff;
+  padding: 20px;
+  color: white;
+  border-radius: 15px;
+}
+
+/* Additional styles for todo items */
+.todo-item {
+  padding: 10px;
+  border-bottom: 1px solid #0033ff;
+}
+
+.todo-item:last-child {
+  border-bottom: none; /* Remove border for the last item */
+}
+
+.todo-item:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Slightly highlight on hover */
+}
+
+@media (max-width: 600px) {
+  #todo-container {
+    padding: 10px; /* Reduce padding on smaller screens */
+  }
+
+  #todo-form {
+    flex-direction: column; /* Stack items vertically */
+  }
+
+  .input-item,
+  #input-button {
+    width: 100%; /* Full width on mobile */
+    font-size: 16px; /* Keep larger font size */
+  }
+
+  li {
+    flex-direction: column; /* Stack checkbox and task name on mobile */
+    align-items: flex-start; /* Align items to the start */
+  }
+
+  .edit-btn,
+  .delete-btn {
+    margin-top: 5px; /* Space between edit and delete buttons */
+  }
+}
