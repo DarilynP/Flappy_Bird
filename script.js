@@ -1,7 +1,7 @@
 let config = {
   renderer: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: window.innerWidth, // Set to window width
+  height: window.innerHeight, // Set to window height
   physics: {
     default: "arcade",
     arcade: {
@@ -13,6 +13,10 @@ let config = {
     preload: preload,
     create: create,
     update: update,
+  },
+  scale: {
+    mode: Phaser.Scale.RESIZE, // Makes the game responsive
+    autoCenter: Phaser.Scale.CENTER_BOTH, // Centers the game on the screen
   },
 };
 
@@ -37,21 +41,39 @@ function preload() {
 
 function create() {
   const background = this.add.image(0, 0, "background").setOrigin(0, 0);
+  background.displayWidth = this.sys.canvas.width; // Stretch background to fit screen
+  background.displayHeight = this.sys.canvas.height;
+
+  const scaleFactor = this.sys.canvas.width / 800; // Calculate scale based on width
+
   const roads = this.physics.add.staticGroup();
   const topColumns = this.physics.add.staticGroup({
     key: "column",
     repeat: 1,
-    setXY: { x: 200, y: 0, stepX: 300 },
+    setXY: { x: 200 * scaleFactor, y: 0, stepX: 300 * scaleFactor },
   });
 
   const bottomColumns = this.physics.add.staticGroup({
     key: "column",
     repeat: 1,
-    setXY: { x: 350, y: 400, stepX: 300 },
+    setXY: {
+      x: 350 * scaleFactor,
+      y: 400 * scaleFactor,
+      stepX: 300 * scaleFactor,
+    },
   });
-  const road = roads.create(400, 568, "road").setScale(2).refreshBody();
+  const road = roads
+    .create(
+      this.sys.canvas.width / 2,
+      this.sys.canvas.height - 32 * scaleFactor,
+      "road"
+    )
+    .setScale(scaleFactor * 2)
+    .refreshBody();
 
-  bird = this.physics.add.sprite(0, 50, "bird").setScale(2);
+  bird = this.physics.add
+    .sprite(0, 50 * scaleFactor, "bird")
+    .setScale(scaleFactor * 2);
   bird.setBounce(0.2);
   bird.setCollideWorldBounds(true);
 
@@ -77,18 +99,26 @@ function create() {
 
   cursors = this.input.keyboard.createCursorKeys();
 
-  messageToPlayer = this.add.text(
+  messageToPlayer = this.add
+    .text(
+      this.sys.canvas.width * 0.5,
+      this.sys.canvas.height * 0.9,
+      "Instructions: Press space bar to start",
+      {
+        fontFamily: '"Comic Sans MS", Times, serif',
+        fontSize: `${20 * scaleFactor}px`, // Scale text size
+        color: "black",
+        backgroundColor: "white",
+      }
+    )
+    .setOrigin(0.5); // Center text
+
+  Phaser.Display.Align.In.BottomCenter(
+    messageToPlayer,
+    background,
     0,
-    0,
-    "Instructions: Press space bar to start",
-    {
-      fontFamily: '"Comic Sans MS", Times, serif',
-      fontSize: "20px",
-      color: "black",
-      backgroundColor: "white",
-    }
+    50 * scaleFactor
   );
-  Phaser.Display.Align.In.BottomCenter(messageToPlayer, background, 0, 50);
 }
 
 function update() {
@@ -107,12 +137,6 @@ function update() {
     bird.setVelocityY(-160);
   }
 
-  // Move bird right if game started and it hasn't landed on or bumped into something
-  // if(!hasLanded && !hasBumped) {
-  //   bird.body.velocity.x = 50;
-  // } else {
-  //   bird.body.velocity.x= 0;
-  // }
   if (isGameStarted && (!hasLanded || !hasBumped)) {
     bird.body.velocity.x = 50;
   } else {
@@ -123,7 +147,7 @@ function update() {
     messageToPlayer.text = "Oh no! You crashed!";
   }
 
-  if (bird.x > 750) {
+  if (bird.x > this.sys.canvas.width * 0.9) {
     bird.setVelocityY(40);
     messageToPlayer.text = "Congrats! You won!";
   }
