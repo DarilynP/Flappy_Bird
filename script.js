@@ -1,7 +1,7 @@
 let config = {
   renderer: Phaser.AUTO,
-  width: window.innerWidth, // Set to window width
-  height: window.innerHeight, // Set to window height
+  width: window.innerWidth,
+  height: window.innerHeight,
   physics: {
     default: "arcade",
     arcade: {
@@ -15,19 +15,18 @@ let config = {
     update: update,
   },
   scale: {
-    mode: Phaser.Scale.RESIZE, // Makes the game responsive
-    autoCenter: Phaser.Scale.CENTER_BOTH, // Centers the game on the screen
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
   },
 };
 
 let game = new Phaser.Game(config);
 let bird;
 let hasLanded = false;
-let cursors;
 let hasBumped = false;
-
 let isGameStarted = false;
 let messageToPlayer;
+let cursors;
 
 function preload() {
   this.load.image("background", "assets/background.png");
@@ -40,19 +39,33 @@ function preload() {
 }
 
 function create() {
+  // Background
   const background = this.add.image(0, 0, "background").setOrigin(0, 0);
-  background.displayWidth = this.sys.canvas.width; // Stretch background to fit screen
-  background.displayHeight = this.sys.canvas.height;
+  background.setDisplaySize(this.scale.width, this.scale.height);
 
-  const scaleFactor = this.sys.canvas.width / 800; // Calculate scale based on width
+  // Scale factor calculation for consistent resizing
+  const scaleFactor = Math.min(this.scale.width / 800, this.scale.height / 600);
 
-  const roads = this.physics.add.staticGroup();
+  // Bird setup
+  bird = this.physics.add
+    .sprite(0, 50 * scaleFactor, "bird")
+    .setScale(scaleFactor);
+  bird.setBounce(0.2);
+  bird.setCollideWorldBounds(true);
+
+  // Ground setup
+  const road = this.physics.add.staticGroup();
+  road
+    .create(this.scale.width / 2, this.scale.height - 32 * scaleFactor, "road")
+    .setScale(scaleFactor * 2)
+    .refreshBody();
+
+  // Column setups
   const topColumns = this.physics.add.staticGroup({
     key: "column",
     repeat: 1,
     setXY: { x: 200 * scaleFactor, y: 0, stepX: 300 * scaleFactor },
   });
-
   const bottomColumns = this.physics.add.staticGroup({
     key: "column",
     repeat: 1,
@@ -62,77 +75,41 @@ function create() {
       stepX: 300 * scaleFactor,
     },
   });
-  const road = roads
-    .create(
-      this.sys.canvas.width / 2,
-      this.sys.canvas.height - 32 * scaleFactor,
-      "road"
-    )
-    .setScale(scaleFactor * 2)
-    .refreshBody();
 
-  bird = this.physics.add
-    .sprite(0, 50 * scaleFactor, "bird")
-    .setScale(scaleFactor * 2);
-  bird.setBounce(0.2);
-  bird.setCollideWorldBounds(true);
-
-  this.physics.add.overlap(bird, road, () => (hasLanded = true), null, this);
-  this.physics.add.collider(bird, road);
-
-  this.physics.add.overlap(
-    bird,
-    topColumns,
-    () => (hasBumped = true),
-    null,
-    this
-  );
-  this.physics.add.overlap(
-    bird,
-    bottomColumns,
-    () => (hasBumped = true),
-    null,
-    this
-  );
-  this.physics.add.collider(bird, topColumns);
-  this.physics.add.collider(bird, bottomColumns);
+  // Physics collisions
+  this.physics.add.collider(bird, road, () => (hasLanded = true));
+  this.physics.add.collider(bird, topColumns, () => (hasBumped = true));
+  this.physics.add.collider(bird, bottomColumns, () => (hasBumped = true));
 
   cursors = this.input.keyboard.createCursorKeys();
 
+  // Instructions message
   messageToPlayer = this.add
     .text(
-      this.sys.canvas.width * 0.5,
-      this.sys.canvas.height * 0.9,
+      this.scale.width * 0.5,
+      this.scale.height * 0.9,
       "Instructions: Press space bar to start",
       {
         fontFamily: '"Comic Sans MS", Times, serif',
-        fontSize: `${20 * scaleFactor}px`, // Scale text size
+        fontSize: `${20 * scaleFactor}px`,
         color: "black",
         backgroundColor: "white",
       }
     )
-    .setOrigin(0.5); // Center text
-
-  Phaser.Display.Align.In.BottomCenter(
-    messageToPlayer,
-    background,
-    0,
-    50 * scaleFactor
-  );
+    .setOrigin(0.5);
 }
 
 function update() {
   if (cursors.space.isDown && !isGameStarted) {
     isGameStarted = true;
     messageToPlayer.text =
-      'Instructions: Press the "^" button to stay upright\nAnd don\'t hit the columns or ground';
+      'Instructions: Press the "^" button to stay upright\nAvoid the columns and ground';
   }
 
   if (!isGameStarted) {
     bird.setVelocityY(-160);
   }
 
-  // Move bird upwards
   if (cursors.up.isDown && !hasLanded && !hasBumped) {
     bird.setVelocityY(-160);
   }
@@ -147,8 +124,13 @@ function update() {
     messageToPlayer.text = "Oh no! You crashed!";
   }
 
-  if (bird.x > this.sys.canvas.width * 0.9) {
+  if (bird.x > this.scale.width * 0.9) {
     bird.setVelocityY(40);
     messageToPlayer.text = "Congrats! You won!";
   }
 }
+
+// Window resize listener
+window.addEventListener("resize", () => {
+  game.scale.resize(window.innerWidth, window.innerHeight);
+});
